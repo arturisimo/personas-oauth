@@ -26,5 +26,5 @@ El servidor de autenticación provee el token al cliente. El cliente hace la lla
 **Cliente**
 
 	http://localhost:8000/test -> 	GET:http://localhost:5000/lista
-  http://localhost:8000/test-delete  ->  DELETE:http://localhost:5000/lista/uno@gmail.com
+  	http://localhost:8000/test-delete  ->  DELETE:http://localhost:5000/lista/uno@gmail.com
 
