@@ -10,6 +10,8 @@ JWT Esta compuesto de
 
 El servidor de autenticación provee el token al cliente. El cliente hace la llamada al **servidor de recurso** (microservicio) con ese token en vez del usuario/password. El servidor comprueba los datos a partir de la firma y el método de encriptación (usualmente de clave simétrica)
 
++ info: [OAuth 2.0: equilibrio y usabilidad en la securización de APIs](https://www.paradigmadigital.com/dev/oauth-2-0-equilibrio-y-usabilidad-en-la-securizacion-de-apis/)
+
 
 **Servidor de autenticacion**
 
