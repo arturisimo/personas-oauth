@@ -38,12 +38,7 @@ public class PersonasController {
 	
 	@DeleteMapping(value="/lista/{email}",produces=MediaType.APPLICATION_JSON_VALUE)
 	public List<Persona> eliminarPersona(@PathVariable("email") String email){
-		
-		for(int i=0; i<personas.size(); i++) {
-			if(personas.get(i).getEmail().equals(email)) {
-				personas.remove(i);
-			}
-		}
+		personas.removeIf(p-> email.equals(p.getEmail()));
 		return personas;
 	}
 }

@@ -5,21 +5,28 @@ import java.util.Arrays;
 
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.apz.curso.model.Persona;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController
 public class TestJwt {
+	
+	private static final Logger LOG = LoggerFactory.getLogger(TestJwt.class);
 	
 	@Value("${server.oauth}")
 	private String urlServidorOauth;
@@ -49,18 +56,22 @@ public class TestJwt {
 		
 		RestTemplate restTemplate = new RestTemplate();
 		
-		//Peticion del token al servidor de autenticacion con las credenciales en la cabecera
-		HttpHeaders headers = getHeaderServer();
-		
-		String token = getToken(headers);
-		System.out.println("--"+token);
-		
-		// Uso del access token para la autenticacion
-		HttpHeaders headerToken = getHeaderToken(token);
-		HttpEntity<String> entity = new HttpEntity<>(headerToken);
-
-		return restTemplate.exchange(urlServidorRecursos, HttpMethod.GET, entity, Persona[].class);
-		
+		try {
+			//Peticion del token al servidor de autenticacion con las credenciales en la cabecera
+			HttpHeaders headers = getHeaderServer();
+			
+			String token = getToken(headers);
+			LOG.info("token: {}", token);
+			
+			// Uso del access token para la autenticacion
+			HttpHeaders headerToken = getHeaderToken(token);
+			HttpEntity<String> entity = new HttpEntity<>(headerToken);
+	
+			return restTemplate.exchange(urlServidorRecursos, HttpMethod.GET, entity, Persona[].class);
+		} catch (IOException e) {
+			LOG.error(e.getMessage());
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 	
 	/**
@@ -68,7 +79,7 @@ public class TestJwt {
 	 * @return
 	 */
 	@GetMapping(value="test-delete", produces=MediaType.TEXT_PLAIN_VALUE)
-	public String delete() {
+	public ResponseEntity<String> delete() {
 		
 		RestTemplate restTemplate = new RestTemplate();
 		try {
@@ -77,18 +88,21 @@ public class TestJwt {
 			HttpHeaders headers = getHeaderServer();
 			
 			String token = getToken(headers);
-			System.out.println("--"+token);
+			LOG.info("token: {}", token);
 			
 			// Uso del access token para la autenticacion
 			HttpHeaders headerToken = getHeaderToken(token);
 			HttpEntity<String> entity = new HttpEntity<>(headerToken);
-	
-			ResponseEntity<String> data = restTemplate.exchange(urlServidorRecursos + "/"+ email, HttpMethod.DELETE, entity, String.class);
-			System.out.println(data);
-			return data.getBody();
+			
+			String deleteUrl = urlServidorRecursos + "/"+ email;
+			
+			LOG.info("peticion DELETE: {}", deleteUrl);
+			
+			return restTemplate.exchange(deleteUrl, HttpMethod.DELETE, entity, String.class);
 		
 		} catch (Exception e) {
-			return e.getMessage();
+			LOG.error(e.getMessage());
+			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
 	}
@@ -110,30 +124,27 @@ public class TestJwt {
 	 * Solicitamos el token al servidor oauth
 	 * @param response
 	 * @return
+	 * @throws JsonProcessingException 
+	 * @throws JsonMappingException 
 	 */
-	private String getToken(HttpHeaders headers) {
+	private String getToken(HttpHeaders headers) throws JsonMappingException, JsonProcessingException {
 		ObjectMapper mapper = new ObjectMapper();
 		HttpEntity<String> request = new HttpEntity<String>(headers);		
-		ResponseEntity<String> response = null;
 		RestTemplate restTemplate = new RestTemplate();
-		JsonNode node;
 		
 		//Los parametros podian ir en el body en vez de en la url
 		String accessTokenUrl = urlServidorOauth + "/token?grant_type=password"
 									+ "&username=" + user
 									+ "&password=" + pwd;
 		
-		try {
+		LOG.info("peticion POST: {}", accessTokenUrl);
 		
-			//petición POST al servidor de autenticacion
-			response = restTemplate.exchange(accessTokenUrl, HttpMethod.POST, request, String.class);
+		//petición POST al servidor de autenticacion
+		ResponseEntity<String> response = restTemplate.exchange(accessTokenUrl, HttpMethod.POST, request, String.class);
 		
-			node = mapper.readTree(response.getBody());
-			return node.path("access_token").asText();
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
-			return null;
-		}
+		JsonNode node = mapper.readTree(response.getBody());
+		return node.path("access_token").asText();
+		
 	}
 	
 	/**
@@ -142,9 +153,10 @@ public class TestJwt {
 	 * @return
 	 */
 	private HttpHeaders getHeaderToken(String token) {
-		HttpHeaders headers1 = new HttpHeaders();
-		headers1.add("Authorization", "Bearer " + token);
-		return headers1;
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Authorization", "Bearer " + token);
+		LOG.info("Authorization: Bearer " + token);
+		return headers;
 	}
 	
 }

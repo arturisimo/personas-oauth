@@ -1,0 +1,40 @@
+version: '2'
+
+networks:
+  curso_network:
+
+
+services:
+  client:
+    container_name: personas-oauth-client
+    build:
+      context: ./personas-client/
+    image: curso/personas-oauth-client:v0.0.1-SNAPSHOT
+    ports:
+     - "8001:8001"
+    expose: 
+    - "8001"
+    networks:
+     - curso_network
+  server:
+    container_name: personas-oauth-server
+    build:
+      context: ./personas-server/
+    image: curso/personas-oauth-server:v0.0.1-SNAPSHOT
+    ports:
+     - "5000:5000"
+    expose: 
+     - "5000"
+    networks:
+     - curso_network
+  oauth:
+    container_name: server-oauth
+    build:
+      context: ./server-oauth/
+    image: curso/server-oauth:v0.0.1-SNAPSHOT
+    ports:
+     - "6000:6000"
+    expose: 
+     - "6000"
+    networks:
+     - curso_network   
