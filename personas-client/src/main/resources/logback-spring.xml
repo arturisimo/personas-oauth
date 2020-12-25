@@ -5,32 +5,24 @@
     <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
             <Pattern>
-                %d{yyyy-mm-dd HH:mm:ss} - %msg%n
+                %d{yyyy-mm-dd HH:mm:ss} %-5level %class{36}.%M:%L - %msg%n
             </Pattern>
         </layout>
     </appender>
 
-    <appender name="FILE-OAUTH"
-        class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <appender name="FILE-OAUTH" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>/tmp/personas-oauth.log</file>
-        <encoder
-            class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <Pattern>%d{yyyy-mm-dd HH:mm:ss}|%msg%n</Pattern>
         </encoder>
 
-        <rollingPolicy
-            class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- rollover daily and when the file reaches 10 MegaBytes -->
-            <fileNamePattern>/tmp/logs/personas-oauth.%d{yyyy-MM-dd}.%i.log
-            </fileNamePattern>
-            <timeBasedFileNamingAndTriggeringPolicy
-                class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>10MB</maxFileSize>
-            </timeBasedFileNamingAndTriggeringPolicy>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>/tmp/logs/personas-oauth.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
         </rollingPolicy>
     </appender>
     
-    <logger name="org.apz.curso" level="info" additivity="false">
+    <logger name="org.apz.curso" level="info" >
         <appender-ref ref="FILE-OAUTH" />
     </logger>
     
@@ -39,6 +31,4 @@
         <appender-ref ref="Console" />
     </root>
 
-    
-
-</configuration
+</configuration>

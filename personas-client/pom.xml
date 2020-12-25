@@ -8,12 +8,6 @@
 	    <version>0.0.1-SNAPSHOT</version>
 	</parent>
 	<artifactId>personas-client</artifactId>
-	<dependencies>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-log4j12</artifactId>
-		</dependency>
-	</dependencies>
 	<profiles>
 		<profile>
 		    <id>dev</id>
@@ -45,7 +39,6 @@
 			<plugin>
 	            <groupId>org.springframework.boot</groupId>
 	            <artifactId>spring-boot-maven-plugin</artifactId>
-	            <version>1.2.5.RELEASE</version>
 	            <executions>
 	                <execution>
 	                    <goals>

@@ -1,9 +1,8 @@
 package org.apz.curso.controller;
 
-import java.io.IOException;
 import java.util.Arrays;
+import java.util.Base64;
 
-import org.apache.tomcat.util.codec.binary.Base64;
 import org.apz.curso.model.Persona;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,16 +60,17 @@ public class TestJwt {
 			HttpHeaders headers = getHeaderServer();
 			
 			String token = getToken(headers);
-			LOG.info("token: {}", token);
 			
 			// Uso del access token para la autenticacion
 			HttpHeaders headerToken = getHeaderToken(token);
 			HttpEntity<String> entity = new HttpEntity<>(headerToken);
 	
+			LOG.info("GET recurso securizado: {}", urlServidorRecursos);
+			
 			return restTemplate.exchange(urlServidorRecursos, HttpMethod.GET, entity, Persona[].class);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			LOG.error(e.getMessage());
-			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(new Persona[] {}, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 	
@@ -88,7 +88,6 @@ public class TestJwt {
 			HttpHeaders headers = getHeaderServer();
 			
 			String token = getToken(headers);
-			LOG.info("token: {}", token);
 			
 			// Uso del access token para la autenticacion
 			HttpHeaders headerToken = getHeaderToken(token);
@@ -96,13 +95,13 @@ public class TestJwt {
 			
 			String deleteUrl = urlServidorRecursos + "/"+ email;
 			
-			LOG.info("peticion DELETE: {}", deleteUrl);
+			LOG.info("DELETE recurso securizado: {}", deleteUrl);
 			
 			return restTemplate.exchange(deleteUrl, HttpMethod.DELETE, entity, String.class);
 		
 		} catch (Exception e) {
 			LOG.error(e.getMessage());
-			return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		
 	}
@@ -113,10 +112,11 @@ public class TestJwt {
 	 */
 	private HttpHeaders getHeaderServer() {
 		String credentials = userOauth +":" + pwdOauth;
-		String encodedCredentials = new String(Base64.encodeBase64(credentials.getBytes()));
+		String encodedCredentials = new String(Base64.getEncoder().encodeToString(credentials.getBytes()));
 		HttpHeaders headers = new HttpHeaders();
 		headers.setAccept(Arrays.asList(MediaType.TEXT_PLAIN));
 		headers.add("Authorization", "Basic " + encodedCredentials);
+		LOG.info("CAbecera con credenciales para el login en server oauth: [Authorization: Basic {} ] ", encodedCredentials);
 		return headers;
 	}
 	
@@ -155,7 +155,7 @@ public class TestJwt {
 	private HttpHeaders getHeaderToken(String token) {
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Authorization", "Bearer " + token);
-		LOG.info("Authorization: Bearer " + token);
+		LOG.info("Cabecera con JWT: [Authorization: Bearer {}]", token);
 		return headers;
 	}
 	
