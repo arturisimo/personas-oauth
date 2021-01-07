@@ -3,8 +3,29 @@ version: '2'
 networks:
   curso_network:
 
+volumes:
+  mysql.local.data:
 
 services:
+  rdbms:
+    container_name: mysql.local
+    image: mysql:latest
+    restart: always
+    volumes:
+     - mysql.local.data:/usr/lib/mysql
+    ports:
+      - "5200:3306"
+    environment:
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: auth
+    healthcheck:
+      test: "/usr/bin/mysql --user=root --password=root --execute 'SHOW DATABASES;'"
+      interval: 2s
+      timeout: 20s
+      retries: 10  
+    networks:
+     - curso_network  
   client:
     container_name: personas-oauth-client
     build:
@@ -18,6 +39,7 @@ services:
      - curso_network
   server:
     container_name: personas-oauth-server
+    restart: on-failure
     build:
       context: ./personas-server/
     image: curso/personas-oauth-server:v0.0.1-SNAPSHOT
@@ -34,6 +56,8 @@ services:
     image: curso/server-oauth:v0.0.1-SNAPSHOT
     ports:
      - "6000:6000"
+    depends_on:
+     - rdbms 
     expose: 
      - "6000"
     networks:
