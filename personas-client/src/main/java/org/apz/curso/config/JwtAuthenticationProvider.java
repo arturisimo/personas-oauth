@@ -87,7 +87,7 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
 		HttpHeaders headers = new HttpHeaders();
 		headers.setAccept(Arrays.asList(MediaType.TEXT_PLAIN));
 		headers.add("Authorization", "Basic " + encodedCredentials);
-		LOG.info("CAbecera con credenciales para el login en server oauth: [Authorization: Basic {} ] ", encodedCredentials);
+		LOG.info("Cabecera con credenciales para el login en server oauth: [Authorization: Basic {} ] ", encodedCredentials);
 		return headers;
 	}
 	

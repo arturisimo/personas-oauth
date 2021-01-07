@@ -24,6 +24,26 @@
     <maven.compiler.target>1.8</maven.compiler.target>
     <spring.cloud.version>Hoxton.RELEASE</spring.cloud.version>
   </properties>
+  <profiles>
+		<profile>
+		    <id>dev</id>
+		    <properties>
+		        <activatedProperties>dev</activatedProperties>
+		    </properties>
+		    <activation>
+		        <activeByDefault>true</activeByDefault>
+		    </activation>
+		</profile>
+		<profile>
+		    <id>docker</id>
+		    <properties>
+		        <activatedProperties>docker</activatedProperties>
+		    </properties>
+		    <activation>
+		        <activeByDefault>false</activeByDefault>
+		    </activation>
+		</profile>
+	</profiles>
   <dependencyManagement>
 		<dependencies>
 			<dependency>
@@ -33,7 +53,6 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
-			
 		</dependencies>
   </dependencyManagement>
   <dependencies>

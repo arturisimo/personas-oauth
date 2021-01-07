@@ -8,26 +8,23 @@
 	    <version>0.0.1-SNAPSHOT</version>
 	</parent>
 	<artifactId>personas-client</artifactId>
-	<profiles>
-		<profile>
-		    <id>dev</id>
-		    <properties>
-		        <activatedProperties>dev</activatedProperties>
-		    </properties>
-		    <activation>
-		        <activeByDefault>true</activeByDefault>
-		    </activation>
-		</profile>
-		<profile>
-		    <id>docker</id>
-		    <properties>
-		        <activatedProperties>docker</activatedProperties>
-		    </properties>
-		    <activation>
-		        <activeByDefault>false</activeByDefault>
-		    </activation>
-		</profile>
-	</profiles>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt</artifactId>
+			<version>0.9.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20160810</version>
+		</dependency>
+	</dependencies>
 	<build>
 		<resources>
 	        <resource>
