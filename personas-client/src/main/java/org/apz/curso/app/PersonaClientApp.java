@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
-@ComponentScan(basePackages="org.apz.curso.controller")
+@ComponentScan(basePackages = {"org.apz.curso.service","org.apz.curso.config", "org.apz.curso.controller"})
 @SpringBootApplication
 public class PersonaClientApp {
 

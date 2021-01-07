@@ -1,8 +1,9 @@
 package org.apz.curso.controller;
 
-import java.util.Arrays;
-import java.util.Base64;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
+import org.apz.curso.config.User;
 import org.apz.curso.model.Persona;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,14 +14,16 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.web.WebAttributes;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController
 public class TestJwt {
@@ -39,9 +42,6 @@ public class TestJwt {
 	@Value("${server.oauth.pwd}")
 	private String pwdOauth;
 	
-	//usuario que se autentica para hacer la peticion
-	private String user = "user1";
-	private String pwd = "user1";
 	//eliminar por email
 	private String email = "uno@gmail.com";
 	
@@ -50,19 +50,17 @@ public class TestJwt {
 	 * Para listar personas tiene que ser un usuario autenticado
 	 * @return
 	 */
-	@GetMapping(value="test", produces=MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<Persona[]> get() {
+	@PreAuthorize("hasRole('ROLE_USER')")
+	@GetMapping(value="/", produces=MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Persona[]> get(Authentication auth) {
 		
 		RestTemplate restTemplate = new RestTemplate();
 		
 		try {
-			//Peticion del token al servidor de autenticacion con las credenciales en la cabecera
-			HttpHeaders headers = getHeaderServer();
-			
-			String token = getToken(headers);
+			User user = (User)auth.getPrincipal();
 			
 			// Uso del access token para la autenticacion
-			HttpHeaders headerToken = getHeaderToken(token);
+			HttpHeaders headerToken = getHeaderToken(user.getToken());
 			HttpEntity<String> entity = new HttpEntity<>(headerToken);
 	
 			LOG.info("GET recurso securizado: {}", urlServidorRecursos);
@@ -78,19 +76,17 @@ public class TestJwt {
 	 * Solo puede eliminar si tiene ROL_ADMIN. si no devuelve un error 403 Access is denied
 	 * @return
 	 */
-	@GetMapping(value="test-delete", produces=MediaType.TEXT_PLAIN_VALUE)
-	public ResponseEntity<String> delete() {
+	@PreAuthorize("hasRole('ROLE_ADMIN')")
+	@DeleteMapping(value="/", produces=MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<String> delete(Authentication auth) {
 		
 		RestTemplate restTemplate = new RestTemplate();
 		try {
 			
-			//Peticion del token al servidor de autenticacion con las credenciales en la cabecera
-			HttpHeaders headers = getHeaderServer();
-			
-			String token = getToken(headers);
+			User user = (User)auth.getPrincipal();
 			
 			// Uso del access token para la autenticacion
-			HttpHeaders headerToken = getHeaderToken(token);
+			HttpHeaders headerToken = getHeaderToken(user.getPassword());
 			HttpEntity<String> entity = new HttpEntity<>(headerToken);
 			
 			String deleteUrl = urlServidorRecursos + "/"+ email;
@@ -106,47 +102,6 @@ public class TestJwt {
 		
 	}
 	
-	
-	/**
-	 * @return
-	 */
-	private HttpHeaders getHeaderServer() {
-		String credentials = userOauth +":" + pwdOauth;
-		String encodedCredentials = new String(Base64.getEncoder().encodeToString(credentials.getBytes()));
-		HttpHeaders headers = new HttpHeaders();
-		headers.setAccept(Arrays.asList(MediaType.TEXT_PLAIN));
-		headers.add("Authorization", "Basic " + encodedCredentials);
-		LOG.info("CAbecera con credenciales para el login en server oauth: [Authorization: Basic {} ] ", encodedCredentials);
-		return headers;
-	}
-	
-	/**
-	 * Solicitamos el token al servidor oauth
-	 * @param response
-	 * @return
-	 * @throws JsonProcessingException 
-	 * @throws JsonMappingException 
-	 */
-	private String getToken(HttpHeaders headers) throws JsonMappingException, JsonProcessingException {
-		ObjectMapper mapper = new ObjectMapper();
-		HttpEntity<String> request = new HttpEntity<String>(headers);		
-		RestTemplate restTemplate = new RestTemplate();
-		
-		//Los parametros podian ir en el body en vez de en la url
-		String accessTokenUrl = urlServidorOauth + "/token?grant_type=password"
-									+ "&username=" + user
-									+ "&password=" + pwd;
-		
-		LOG.info("peticion POST: {}", accessTokenUrl);
-		
-		//petición POST al servidor de autenticacion
-		ResponseEntity<String> response = restTemplate.exchange(accessTokenUrl, HttpMethod.POST, request, String.class);
-		
-		JsonNode node = mapper.readTree(response.getBody());
-		return node.path("access_token").asText();
-		
-	}
-	
 	/**
 	 * Header con el access token para la peticion de personas
 	 * @param token
@@ -158,5 +113,27 @@ public class TestJwt {
 		LOG.info("Cabecera con JWT: [Authorization: Bearer {}]", token);
 		return headers;
 	}
+	
+	@GetMapping(value="/error", produces=MediaType.APPLICATION_JSON_VALUE)
+	public String error(Model model, HttpServletRequest request) {
+		HttpSession session = request.getSession(false);
+        String errorMessage = null;
+        if (session != null) {
+            AuthenticationException ex = (AuthenticationException) session
+                    .getAttribute(WebAttributes.AUTHENTICATION_EXCEPTION);
+            if (ex != null) {
+                errorMessage = ex.getMessage();
+            }
+        }
+        model.addAttribute("errorMessage", errorMessage);
+		return "error";
+	}
+	
+	@ExceptionHandler(Exception.class)
+	public String exception(Model model, Exception e) {
+		model.addAttribute("errorMessage", e.getMessage());
+		return "error";
+	}
+	
 	
 }
